@@ -1,0 +1,14 @@
+{
+  "stageData" : {
+    "columns": 10,
+    "rows": 10,
+    "levelType" : "arcade"
+  },
+
+  "levelEntities" : [
+
+    {"type" :  "Player", "x" : 0, "y" : 0},
+    {"type" :  "BasicEnemy", "x" : 9, "y" : 9, "optional" : {"targets" : "Player", "movePeriod" :  2}}
+
+  ]
+}
