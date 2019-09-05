@@ -15,20 +15,21 @@ export class Player extends LevelEntity {
 
     tick(tickCount, keyPresses, levelGrid) {
         let pos = levelGrid.getPosition(this);
-        if(keyPresses.get('d') || keyPresses.get('ArrowRight') && !(keyPresses.get('a') || keyPresses.get('ArrowLeft'))) {
-            if(pos.x < levelGrid.columns - 1) {
+        
+        if (keyPresses.get('d') || keyPresses.get('ArrowRight') && !(keyPresses.get('a') || keyPresses.get('ArrowLeft'))) {
+            if (pos.x < levelGrid.columns - 1) {
                 levelGrid.requestMove(this, pos.x + 1, pos.y);
             }
-        } else if(keyPresses.get('a') || keyPresses.get('ArrowLeft') && !(keyPresses.get('d') || keyPresses.get('ArrowRight'))) {
-            if(pos.x > 0) {
+        } else if (keyPresses.get('a') || keyPresses.get('ArrowLeft') && !(keyPresses.get('d') || keyPresses.get('ArrowRight'))) {
+            if (pos.x > 0) {
                 levelGrid.requestMove(this, pos.x - 1, pos.y);
             }
-        } else if(keyPresses.get('s') || keyPresses.get('ArrowDown') && !(keyPresses.get('w') || keyPresses.get('ArrowUp'))) {
-            if(pos.y < levelGrid.rows - 1) {
+        } else if (keyPresses.get('s') || keyPresses.get('ArrowDown') && !(keyPresses.get('w') || keyPresses.get('ArrowUp'))) {
+            if (pos.y < levelGrid.rows - 1) {
                 levelGrid.requestMove(this, pos.x, pos.y + 1);
             }
-        } else if(keyPresses.get('w') || keyPresses.get('ArrowUp') && !(keyPresses.get('s') || keyPresses.get('ArrowDown'))) {
-            if(pos.y > 0) {
+        } else if (keyPresses.get('w') || keyPresses.get('ArrowUp') && !(keyPresses.get('s') || keyPresses.get('ArrowDown'))) {
+            if (pos.y > 0) {
                 levelGrid.requestMove(this, pos.x, pos.y - 1);
             }
         }
@@ -68,47 +69,12 @@ export class BasicEnemy extends LevelEntity {
                 //This finds a list of all targets and sorts them according to distance from this enemy.
                 let targets = levelGrid.entities().filter(obj => obj !== this && this.targetFunction(obj));
                 if (targets.length > 0) {
-                    let distanceFunction = function (target) {
-                        let tPos = levelGrid.getPosition(target);
-                        return taxiCabDistance(tPos.x, tPos.y, pos.x, pos.y);
-                    };
-
-                    let closestTarget = selectRandomMinimumElement(targets, distanceFunction); //Randomly chooses between one of the closest targets so that the same target is not always selected
-
+                    let closestTarget = this._findClosestTarget(levelGrid, targets);
                     //The enemy will request to move 1 tile (in one of 8 directions) towards the closest target
                     let targetPos = levelGrid.getPosition(closestTarget);
                     let deltaX = Math.sign(targetPos.x - x);
                     let deltaY = Math.sign(targetPos.y - y);
-
-                    //Makes sure the enemy doesn't travel in diagonals, and alternates axis of movement when it attempts to do so
-                    if (deltaX !== 0 && deltaY !== 0) {
-                        if (this.lastDirection === null) {
-                            let directionChoice = Math.floor(Math.random() * 2);
-
-                            if (directionChoice === 0) {
-                                deltaX = 0;
-                            } else {
-                                deltaY = 0;
-                            }
-                        } else if (this.lastDirection === 'y') {
-                            deltaY = 0;
-                        } else if (this.lastDirection === 'x') {
-                            deltaX = 0;
-                        }
-                    }
-
-                    if (deltaX !== 0) {
-                        this.lastDirection = 'x';
-                    } else if (deltaY !== 0) {
-                        this.lastDirection = 'y';
-                    }
-
-                    let newX = x + deltaX;
-                    let newY = y + deltaY;
-
-                    if (newX >= 0 && newY >= 0 && newX < levelGrid.columns && newY < levelGrid.rows) {
-                        levelGrid.requestMove(this, newX, newY);
-                    }
+                    this._handleMotionAttempt(levelGrid, deltaX, deltaY);
                 }
             }
         }
@@ -117,12 +83,58 @@ export class BasicEnemy extends LevelEntity {
         this.lastTicked = tickCount;
     }
 
+    _findClosestTarget(levelGrid, targets) {
+        let pos = levelGrid.getPosition(this);
+        let distanceFunction = function (target) {
+            let tPos = levelGrid.getPosition(target);
+            return taxiCabDistance(tPos.x, tPos.y, pos.x, pos.y);
+        };
+
+        //Randomly chooses between one of the closest targets so that the same target is not always selected
+        let closestTarget = selectRandomMinimumElement(targets, distanceFunction);
+        return closestTarget;
+    }
+
+    _handleMotionAttempt(levelGrid, deltaX, deltaY) {
+        //Makes sure the enemy doesn't travel in diagonals, and alternates axis of movement when it attempts to do so
+        if (deltaX !== 0 && deltaY !== 0) {
+            //Randomly choose a direction when the entity has not moved yet
+            if (this.lastDirection === null) {
+                let directionChoice = Math.floor(Math.random() * 2);
+
+                if (directionChoice === 0) {
+                    deltaX = 0;
+                } else {
+                    deltaY = 0;
+                }
+            } else if (this.lastDirection === 'y') {
+                deltaY = 0;
+            } else if (this.lastDirection === 'x') {
+                deltaX = 0;
+            }
+        }
+
+        if (deltaX !== 0) {
+            this.lastDirection = 'x';
+        } else if (deltaY !== 0) {
+            this.lastDirection = 'y';
+        }
+
+        let pos = levelGrid.getPosition(this);
+        let newX = pos.x + deltaX;
+        let newY = pos.y + deltaY;
+
+        if (newX >= 0 && newY >= 0 && newX < levelGrid.columns && newY < levelGrid.rows) {
+            levelGrid.requestMove(this, newX, newY);
+        }
+    }
+
     draw(ctx, x, y) {
         drawInLevel(ctx, x, y, BASIC_ENEMY_COLOR);
     }
 }
 
-function selectRandomMinimumElement(arr, valueFunction) {
+function selectRandomMinimumElement(arr, valueFunction = (a => a)) {
     if (arr.length === 0) {
         return null;
     }

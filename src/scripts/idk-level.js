@@ -142,24 +142,35 @@ class MoveRequestHandler {
             let filteredGridPosition = Array.from(objectsInRequestedPosition).filter(ent => !(ent instanceof Player));
 
             //Checks if the requested position does not already have a non-player object, then checks if that object is also requesting to move
-            //If so, attempt to move that object first. If the object has already been visited recursively, there must be a motion loop, and the objects will both be moved
+            //If so, call the handler function for this circumstance.
             if (filteredGridPosition.length === 0 || filteredGridPosition.every(ent => visited.has(ent))) {
                 this.levelGrid.move(levelEntity, position.x, position.y);
                 this.requests.delete(levelEntity);
             } else if (filteredGridPosition.every(ent => this.requests.has(ent))) {
-                visited.add(levelEntity);
-                for (let blockingEntity of filteredGridPosition) {
-                    this.processSingleRequest(blockingEntity, this.requests.get(blockingEntity), visited);
-                }
-
+                this._handleAnyMovementConflicts(levelEntity, position, visited);
                 let newFilteredGridPosition = Array.from(objectsInRequestedPosition).filter(ent => !(ent instanceof Player));
                 if (newFilteredGridPosition.length === 0) {
                     this.levelGrid.move(levelEntity, position.x, position.y);
                     this.requests.delete(levelEntity);
                 }
-                visited.delete(levelEntity);
             }
         }
+    }
+
+    _handleAnyMovementConflicts(levelEntity, position, visited) {
+        //If levelEntity is attempting to move into other objects, recursively attempt to move those objects too.
+        //If the object has already been visited recursively, there must be a motion loop, and all objects in the loop will be moved.
+        visited.add(levelEntity);
+
+        //This is somewhat repetitive, but I didn't want too many arguments in the function definition
+        let objectsInRequestedPosition = this.levelGrid.grid[position.x][position.y];
+        let filteredGridPosition = Array.from(objectsInRequestedPosition).filter(ent => !(ent instanceof Player));
+
+        for (let blockingEntity of filteredGridPosition) {
+            this.processSingleRequest(blockingEntity, this.requests.get(blockingEntity), visited);
+        }
+
+        visited.delete(levelEntity);
     }
 }
 

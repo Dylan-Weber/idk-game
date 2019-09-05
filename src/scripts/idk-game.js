@@ -2,6 +2,7 @@
 
 import { LevelBuilder } from './idk-level.js';
 
+const ARROW_KEYS = ['ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp'];
 
 class IdkGame {
     static get CANVAS_X_SCALE() { return 2.5; }
@@ -22,6 +23,11 @@ class IdkGame {
         let keyPresses = this.keyPresses;
         keyPresses.clear();
         document.addEventListener("keydown", function(event) {
+            //Prevents the screen from scrolling when attempting to move
+            if (ARROW_KEYS.includes(event.key)) {
+                event.preventDefault();
+            }
+
             keyPresses.set(event.key, true);
         });
 
