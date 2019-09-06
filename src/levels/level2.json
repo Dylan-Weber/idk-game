@@ -1,0 +1,17 @@
+{
+  "stageData" : {
+    "columns": 11,
+    "rows": 11,
+    "levelType" : "arcade"
+  },
+
+  "levelEntities" : [
+
+    {"type" :  "Player", "x" : 0, "y" : 5},
+    {"type" :  "Wall", "x" : 3, "y" : 4},
+    {"type" :  "Wall", "x" : 3, "y" : 5},
+    {"type" :  "Wall", "x" : 3, "y" : 6},
+    {"type" :  "BasicEnemy", "x" : 9, "y" : 4, "optional" : {"targets" : "Player", "movePeriod" :  2}}
+
+  ]
+}

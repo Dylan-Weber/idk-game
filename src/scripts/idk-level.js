@@ -196,6 +196,7 @@ export class LevelBuilder {
         let levelData;
 
         //This reads the json file synchronously. The regular async function $.getJson() wasn't working as I wanted it to.
+        //I admit this isn't the best solution, but I wasn't able to find many better ways to solve it.
         $.ajax({
             url: fileUrl,
             async: false,
@@ -219,7 +220,7 @@ export class LevelBuilder {
             }
         }
 
-        return level; //levelEntities should be parsed
+        return level;
     }
 }
 
@@ -231,18 +232,7 @@ function buildLevelObject(blueprint) {
             return new Player();
 
         case 'basicenemy': {
-            let targetFunction = undefined;
-            let movePeriod = undefined;
-            if (blueprint.hasOwnProperty('optional')) {
-                if (blueprint.optional.hasOwnProperty('targets')) {
-                    targetFunction = ent => ent instanceof stringEntityMap.get(blueprint.optional.targets.toLowerCase());
-                }
-
-                if (blueprint.optional.hasOwnProperty('movePeriod')) {
-                    movePeriod = blueprint.optional.movePeriod;
-                }
-            }
-            return new BasicEnemy(movePeriod, targetFunction);
+            return buildBasicEnemy(blueprint);
         }
 
         case 'wall': {
@@ -255,3 +245,18 @@ function buildLevelObject(blueprint) {
     }
 }
 
+function buildBasicEnemy(blueprint) {
+    let targetFunction = undefined;
+    let movePeriod = undefined;
+
+    if (blueprint.hasOwnProperty('optional')) {
+        if (blueprint.optional.hasOwnProperty('targets')) {
+            targetFunction = ent => ent instanceof stringEntityMap.get(blueprint.optional.targets.toLowerCase());
+        }
+
+        if (blueprint.optional.hasOwnProperty('movePeriod')) {
+            movePeriod = blueprint.optional.movePeriod;
+        }
+    }
+    return new BasicEnemy(movePeriod, targetFunction);
+}
